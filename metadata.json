@@ -1,0 +1,7 @@
+{
+  "name": "Asisten Narasi YPBB",
+  "description": "Aplikasi cerdas untuk membantu membuat, merevisi, dan mengelola narasi komunikasi untuk relawan YPBB menggunakan AI.",
+  "icon": "icon.svg",
+  "permissions": [],
+  "requestFramePermissions": []
+}
