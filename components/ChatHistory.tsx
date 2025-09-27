@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { ChatMessage } from '../types';
 import { UserIcon, SparklesIcon, EllipsisHorizontalIcon } from './Icons';
@@ -7,7 +8,7 @@ interface ChatHistoryProps {
   isLoading: boolean;
 }
 
-export function ChatHistory({ messages, isLoading }: ChatHistoryProps): React.ReactElement {
+function ChatHistoryComponent({ messages, isLoading }: ChatHistoryProps): React.ReactElement {
   if (messages.length === 0 && !isLoading) {
     return <></>;
   }
@@ -63,3 +64,5 @@ export function ChatHistory({ messages, isLoading }: ChatHistoryProps): React.Re
     </div>
   );
 }
+
+export const ChatHistory = React.memo(ChatHistoryComponent);

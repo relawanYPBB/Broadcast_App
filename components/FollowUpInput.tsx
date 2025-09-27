@@ -6,7 +6,7 @@ interface FollowUpInputProps {
   isLoading: boolean;
 }
 
-export function FollowUpInput({ onSubmit, isLoading }: FollowUpInputProps): React.ReactElement {
+function FollowUpInputComponent({ onSubmit, isLoading }: FollowUpInputProps): React.ReactElement {
   const [input, setInput] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -39,3 +39,5 @@ export function FollowUpInput({ onSubmit, isLoading }: FollowUpInputProps): Reac
     </div>
   );
 }
+
+export const FollowUpInput = React.memo(FollowUpInputComponent);

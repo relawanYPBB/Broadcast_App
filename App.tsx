@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { GoogleGenAI, Type, Chat, GenerateContentResponse, Content } from '@google/genai';
+import React, { useState, useCallback } from 'react';
+import { GoogleGenAI, Type, Content } from '@google/genai';
 import { Header } from './components/Header';
 import { GoalSelector } from './components/GoalSelector';
 import { InputForm } from './components/InputForm';
@@ -11,9 +11,8 @@ import { ChatHistory } from './components/ChatHistory';
 import { FollowUpInput } from './components/FollowUpInput';
 import { YPBB_GUIDE_CONTEXT } from './constants';
 import type { NarrativeType, GeneratedOutput, ChatMessage } from './types';
-import { VolunteerInputModeSelector } from './components/VolunteerInputModeSelector';
 import { DocumentUploadForm } from './components/DocumentUploadForm';
-import { EventInputModeSelector } from './components/EventInputModeSelector';
+import { InputModeSelector } from './components/InputModeSelector';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
@@ -71,24 +70,22 @@ const fileToBase64 = (file: File): Promise<string> => {
 
 function App() {
   const [narrativeType, setNarrativeType] = useState<NarrativeType | null>(null);
-  const [volunteerInputMode, setVolunteerInputMode] = useState<'manual' | 'upload' | null>(null);
-  const [eventInputMode, setEventInputMode] = useState<'manual' | 'upload' | null>(null);
+  const [inputMode, setInputMode] = useState<'manual' | 'upload' | null>(null);
   const [generatedOutput, setGeneratedOutput] = useState<GeneratedOutput | null>(null);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setNarrativeType(null);
-    setVolunteerInputMode(null);
-    setEventInputMode(null);
+    setInputMode(null);
     setGeneratedOutput(null);
     setChatHistory([]);
     setError(null);
     setIsLoading(false);
-  };
+  }, []);
 
-  const handleInitialSubmit = async (userInput: string | { file: File }, type: NarrativeType) => {
+  const handleInitialSubmit = useCallback(async (userInput: string | { file: File }, type: NarrativeType) => {
     setIsLoading(true);
     setError(null);
 
@@ -145,9 +142,9 @@ ${YPBB_GUIDE_CONTEXT}`;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
   
-  const handleFollowUpSubmit = async (message: string) => {
+  const handleFollowUpSubmit = useCallback(async (message: string) => {
     if (!generatedOutput) return;
 
     const currentChatHistory = [...chatHistory, { role: 'user' as const, parts: [{ text: message }] }];
@@ -198,7 +195,10 @@ ${YPBB_GUIDE_CONTEXT}`;
     } finally {
         setIsLoading(false);
     }
-  };
+  }, [generatedOutput, chatHistory]);
+
+  const cancelNarrativeType = useCallback(() => setNarrativeType(null), []);
+  const cancelInputMode = useCallback(() => setInputMode(null), []);
 
   const renderContent = () => {
     if (isLoading && !generatedOutput && chatHistory.length === 0) {
@@ -227,7 +227,6 @@ ${YPBB_GUIDE_CONTEXT}`;
         <div className="space-y-6">
           <AnalysisCard analysisText={generatedOutput.analysis} />
           {generatedOutput.narratives.map((narrative, index) => (
-            // FIX: Wrapped NarrativeCard in a div to apply the key, resolving a TypeScript error where 'key' was treated as a component prop.
             <div key={index}>
               <NarrativeCard narrative={narrative} />
             </div>
@@ -245,69 +244,43 @@ ${YPBB_GUIDE_CONTEXT}`;
         </div>
       );
     }
-
-    if (narrativeType === 'event') {
-        if (eventInputMode === 'upload') {
-            return (
-                <DocumentUploadForm
-                    onSubmit={(file) => handleInitialSubmit({ file }, 'event')}
-                    onCancel={() => setEventInputMode(null)}
-                    isLoading={isLoading}
-                />
-            );
-        }
-        if (eventInputMode === 'manual') {
-            return (
-                <InputForm
-                    narrativeType="event"
-                    onSubmit={(prompt) => handleInitialSubmit(prompt, 'event')}
-                    onCancel={() => setEventInputMode(null)}
-                    isLoading={isLoading}
-                />
-            );
-        }
-        return (
-            <EventInputModeSelector
-                onSelectMode={setEventInputMode}
-                onCancel={() => setNarrativeType(null)}
-            />
-        );
-    }
-
-    if (narrativeType === 'volunteer') {
-      if (volunteerInputMode === 'upload') {
+    
+    if (narrativeType === 'event' || narrativeType === 'volunteer') {
+      if (inputMode === 'upload') {
         return (
           <DocumentUploadForm
-            onSubmit={(file) => handleInitialSubmit({ file }, 'volunteer')}
-            onCancel={() => setVolunteerInputMode(null)}
+            onSubmit={(file) => handleInitialSubmit({ file }, narrativeType)}
+            onCancel={cancelInputMode}
             isLoading={isLoading}
           />
         );
       }
-      if (volunteerInputMode === 'manual') {
+      if (inputMode === 'manual') {
         return (
           <InputForm
-            narrativeType="volunteer"
-            onSubmit={(prompt) => handleInitialSubmit(prompt, 'volunteer')}
-            onCancel={() => setVolunteerInputMode(null)}
+            narrativeType={narrativeType}
+            onSubmit={(prompt) => handleInitialSubmit(prompt, narrativeType)}
+            onCancel={cancelInputMode}
             isLoading={isLoading}
           />
         );
       }
       return (
-        <VolunteerInputModeSelector
-          onSelectMode={setVolunteerInputMode}
-          onCancel={() => setNarrativeType(null)}
+        <InputModeSelector
+          narrativeType={narrativeType}
+          onSelectMode={setInputMode}
+          onCancel={cancelNarrativeType}
         />
       );
     }
+
 
     if (narrativeType) {
       return (
         <InputForm
           narrativeType={narrativeType}
           onSubmit={(prompt) => handleInitialSubmit(prompt, narrativeType)}
-          onCancel={() => setNarrativeType(null)}
+          onCancel={cancelNarrativeType}
           isLoading={isLoading}
         />
       );

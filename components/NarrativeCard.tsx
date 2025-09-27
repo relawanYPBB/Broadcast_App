@@ -7,9 +7,7 @@ interface NarrativeCardProps {
   narrative: Narrative;
 }
 
-// Fix: Replaced JSX.Element with React.ReactElement to resolve namespace error.
-// Fix: Removed the unused `index` prop.
-export function NarrativeCard({ narrative }: NarrativeCardProps): React.ReactElement {
+function NarrativeCardComponent({ narrative }: NarrativeCardProps): React.ReactElement {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -44,3 +42,5 @@ export function NarrativeCard({ narrative }: NarrativeCardProps): React.ReactEle
     </div>
   );
 }
+
+export const NarrativeCard = React.memo(NarrativeCardComponent);

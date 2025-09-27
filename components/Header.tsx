@@ -1,8 +1,8 @@
+
 import React from 'react';
 import { InfoIcon } from './Icons';
 
-// Fix: Replaced JSX.Element with React.ReactElement to resolve namespace error.
-export function Header(): React.ReactElement {
+function HeaderComponent(): React.ReactElement {
   return (
     <header className="text-center">
       <div className="inline-block bg-ypbb-blue-dark p-3 rounded-full mb-4 shadow-lg">
@@ -17,3 +17,5 @@ export function Header(): React.ReactElement {
     </header>
   );
 }
+
+export const Header = React.memo(HeaderComponent);

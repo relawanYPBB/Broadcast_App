@@ -6,8 +6,7 @@ interface DataNeededCardProps {
   items: string[];
 }
 
-// Fix: Replaced JSX.Element with React.ReactElement to resolve namespace error.
-export function DataNeededCard({ items }: DataNeededCardProps): React.ReactElement {
+function DataNeededCardComponent({ items }: DataNeededCardProps): React.ReactElement {
   return (
     <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl shadow-md overflow-hidden p-6 border border-amber-200 dark:border-amber-800">
       <div className="flex items-start space-x-4">
@@ -30,3 +29,5 @@ export function DataNeededCard({ items }: DataNeededCardProps): React.ReactEleme
     </div>
   );
 }
+
+export const DataNeededCard = React.memo(DataNeededCardComponent);

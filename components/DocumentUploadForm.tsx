@@ -8,25 +8,26 @@ interface DocumentUploadFormProps {
     isLoading: boolean;
 }
 
-export function DocumentUploadForm({ onSubmit, onCancel, isLoading }: DocumentUploadFormProps): React.ReactElement {
+const SUPPORTED_TYPES = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'image/png', 'image/jpeg'];
+const SUPPORTED_EXTENSIONS = ".pdf, .docx, .txt, .png, .jpg";
+
+function DocumentUploadFormComponent({ onSubmit, onCancel, isLoading }: DocumentUploadFormProps): React.ReactElement {
     const [file, setFile] = useState<File | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const supportedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'image/png', 'image/jpeg'];
-    const supportedExtensions = ".pdf, .docx, .txt, .png, .jpg";
 
-    const handleFileSelect = (selectedFile: File | undefined) => {
+    const handleFileSelect = useCallback((selectedFile: File | undefined) => {
         if (selectedFile) {
-            if (supportedTypes.includes(selectedFile.type)) {
+            if (SUPPORTED_TYPES.includes(selectedFile.type)) {
                 setFile(selectedFile);
                 setError(null);
             } else {
                 setFile(null);
-                setError(`Format file tidak didukung. Harap gunakan: ${supportedExtensions}`);
+                setError(`Format file tidak didukung. Harap gunakan: ${SUPPORTED_EXTENSIONS}`);
             }
         }
-    };
+    }, []);
     
     const onDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
         event.preventDefault();
@@ -35,7 +36,7 @@ export function DocumentUploadForm({ onSubmit, onCancel, isLoading }: DocumentUp
         if (event.dataTransfer.files && event.dataTransfer.files[0]) {
             handleFileSelect(event.dataTransfer.files[0]);
         }
-    }, []);
+    }, [handleFileSelect]);
 
     const onDragOver = (event: React.DragEvent<HTMLDivElement>) => {
         event.preventDefault();
@@ -65,7 +66,6 @@ export function DocumentUploadForm({ onSubmit, onCancel, isLoading }: DocumentUp
     const handleRemoveFile = () => {
         setFile(null);
         setError(null);
-        // Reset the file input value using a ref
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
@@ -84,7 +84,7 @@ export function DocumentUploadForm({ onSubmit, onCancel, isLoading }: DocumentUp
                   onDragLeave={onDragLeave}
                   className={`relative block w-full border-2 border-dashed rounded-lg p-12 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ypbb-blue-light transition-colors ${isDragOver ? 'border-ypbb-blue-dark bg-ypbb-blue-light/10' : 'border-gray-300 dark:border-slate-600'}`}
               >
-                  <input ref={fileInputRef} type="file" id="file-upload" className="sr-only" onChange={onFileChange} accept={supportedExtensions} />
+                  <input ref={fileInputRef} type="file" id="file-upload" className="sr-only" onChange={onFileChange} accept={SUPPORTED_EXTENSIONS} />
                   <label htmlFor="file-upload" className="cursor-pointer">
                       <ArrowUpTrayIcon className="mx-auto h-12 w-12 text-gray-400" />
                       <span className="mt-2 block text-sm font-medium text-slate-800 dark:text-slate-200">
@@ -131,3 +131,5 @@ export function DocumentUploadForm({ onSubmit, onCancel, isLoading }: DocumentUp
         </div>
     );
 }
+
+export const DocumentUploadForm = React.memo(DocumentUploadFormComponent);

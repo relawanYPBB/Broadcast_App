@@ -6,8 +6,7 @@ interface AnalysisCardProps {
   analysisText: string;
 }
 
-// Fix: Replaced JSX.Element with React.ReactElement to resolve namespace error.
-export function AnalysisCard({ analysisText }: AnalysisCardProps): React.ReactElement {
+function AnalysisCardComponent({ analysisText }: AnalysisCardProps): React.ReactElement {
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden p-6 border border-slate-200 dark:border-slate-700">
       <div className="flex items-start space-x-4">
@@ -28,3 +27,5 @@ export function AnalysisCard({ analysisText }: AnalysisCardProps): React.ReactEl
     </div>
   );
 }
+
+export const AnalysisCard = React.memo(AnalysisCardComponent);

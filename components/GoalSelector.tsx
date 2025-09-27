@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { NarrativeType } from '../types';
 import { CalendarIcon, LinkIcon, UsersIcon, PencilSquareIcon } from './Icons';
@@ -13,7 +14,7 @@ const goals = [
   { type: 'general' as NarrativeType, icon: PencilSquareIcon, title: 'Lainnya (Umum)', description: 'Untuk kebutuhan narasi lain yang lebih fleksibel.' },
 ];
 
-export function GoalSelector({ onSelect }: GoalSelectorProps): React.ReactElement {
+function GoalSelectorComponent({ onSelect }: GoalSelectorProps): React.ReactElement {
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 sm:p-8 border border-slate-200 dark:border-slate-700">
       <h2 className="text-2xl font-bold text-center text-slate-800 dark:text-white mb-2">
@@ -44,3 +45,5 @@ export function GoalSelector({ onSelect }: GoalSelectorProps): React.ReactElemen
     </div>
   );
 }
+
+export const GoalSelector = React.memo(GoalSelectorComponent);

@@ -92,7 +92,7 @@ const formConfig: { [key in NarrativeType]: { title: string; fields: FormFieldCo
   },
 };
 
-export function InputForm({ narrativeType, onSubmit, onCancel, isLoading }: InputFormProps): React.ReactElement {
+function InputFormComponent({ narrativeType, onSubmit, onCancel, isLoading }: InputFormProps): React.ReactElement {
   const config = formConfig[narrativeType];
   const initialFields = config.fields.reduce((acc, field) => ({ ...acc, [field.name]: '' }), {});
   const [fields, setFields] = useState<FormFields>(initialFields);
@@ -174,3 +174,5 @@ export function InputForm({ narrativeType, onSubmit, onCancel, isLoading }: Inpu
     </div>
   );
 }
+
+export const InputForm = React.memo(InputFormComponent);
