@@ -144,35 +144,68 @@ ${YPBB_GUIDE_CONTEXT}`;
     }
   }, []);
   
-  const handleFollowUpSubmit = useCallback(async (message: string) => {
+  const handleFollowUpSubmit = useCallback(async (message: string, file?: File) => {
     if (!generatedOutput) return;
 
-    const currentChatHistory = [...chatHistory, { role: 'user' as const, parts: [{ text: message }] }];
-    setChatHistory(currentChatHistory);
+    let userDisplayText = message;
+    if (file) {
+      userDisplayText += `\n[File dilampirkan: ${file.name}]`;
+    }
+
+    const newUserMessage: ChatMessage = { role: 'user' as const, parts: [{ text: userDisplayText }] };
+    const updatedHistory = [...chatHistory, newUserMessage];
+    setChatHistory(updatedHistory);
     setIsLoading(true);
     setError(null);
     
+    // Create a robust revision prompt that includes the current state
     const revisionPrompt = `
-      Ini adalah output JSON terakhir yang Anda hasilkan:
+      STATUS NARASI SAAT INI (JSON):
       ${JSON.stringify(generatedOutput)}
 
-      Pengguna sekarang meminta revisi berikut: "${message}"
+      PERMINTAAN REVISI BARU: "${message}"
 
-      Tugas Anda adalah membuat ulang SELURUH output JSON sesuai dengan skema yang sama, dengan menerapkan revisi yang diminta.
-      Field 'analysis' harus menjelaskan perubahan yang Anda buat berdasarkan permintaan pengguna.
-      Pastikan JSON yang Anda kembalikan valid. Jangan tambahkan penjelasan apa pun di luar objek JSON.
+      ${file ? 'PENGGUNA MELAMPIRKAN DOKUMEN TAMBAHAN: Gunakan informasi dalam file ini untuk memperkaya narasi.' : ''}
+
+      INSTRUKSI:
+      1. Tinjau permintaan revisi dan dokumen (jika ada).
+      2. Perbarui seluruh objek JSON narasi agar mencerminkan perubahan tersebut.
+      3. Pastikan gaya bahasa tetap mengikuti panduan YPBB (Sobat Organis, Sobat).
+      4. Dalam field 'analysis', jelaskan secara singkat alasan perubahan yang Anda buat berdasarkan permintaan pengguna.
+      5. Kembalikan HANYA objek JSON yang valid.
     `;
 
-    const systemInstruction = `Anda adalah asisten AI yang bertugas merevisi narasi untuk grup relawan YPBB.
-      Anda HARUS SELALU mematuhi panduan komunikasi YPBB.
+    const systemInstruction = `Anda adalah asisten AI yang bertugas merevisi narasi untuk grup relawan YPBB. 
+      Penting untuk diingat bahwa Anda berada dalam sebuah percakapan berkelanjutan. Gunakan riwayat pesan sebelumnya untuk menjaga konteks dan konsistensi.
       Pastikan output Anda dalam format JSON yang valid sesuai skema yang diberikan.
-      Penting: Dalam properti 'content' untuk setiap narasi, formatlah teks dengan jeda baris (newlines) yang sesuai untuk memisahkan paragraf. Ini sangat penting agar narasi mudah dibaca di aplikasi chat.
+      Penting: Gunakan '\\n' untuk jeda baris di dalam teks konten agar format paragraf terjaga.
       ${YPBB_GUIDE_CONTEXT}`;
 
     try {
+      // Build parts for the latest message
+      const latestUserParts: any[] = [{ text: revisionPrompt }];
+      if (file) {
+        const base64File = await fileToBase64(file);
+        latestUserParts.push({
+          inlineData: {
+            mimeType: file.type,
+            data: base64File,
+          },
+        });
+      }
+
+      // Construct the full context including previous chat history to improve memory
+      const contents: Content[] = [
+        ...chatHistory.map(msg => ({
+          role: msg.role,
+          parts: msg.parts.map(p => ({ text: p.text }))
+        })),
+        { role: 'user', parts: latestUserParts }
+      ];
+
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: [{ role: 'user', parts: [{ text: revisionPrompt }] }],
+        contents: contents,
         config: {
           systemInstruction: systemInstruction,
           responseMimeType: 'application/json',
@@ -184,14 +217,14 @@ ${YPBB_GUIDE_CONTEXT}`;
       setGeneratedOutput(newJsonOutput);
 
       const modelMessage: ChatMessage = { role: 'model', parts: [{ text: newJsonOutput.analysis }] };
-      setChatHistory([...currentChatHistory, modelMessage]);
+      setChatHistory([...updatedHistory, modelMessage]);
 
     } catch (e) {
         console.error("Error during revision:", e);
         const errorMessage = 'Maaf, terjadi kesalahan saat merevisi narasi. Silakan coba lagi.';
         setError(errorMessage);
         const modelErrorMessage: ChatMessage = { role: 'model', parts: [{ text: errorMessage }] };
-        setChatHistory([...currentChatHistory, modelErrorMessage]);
+        setChatHistory([...updatedHistory, modelErrorMessage]);
     } finally {
         setIsLoading(false);
     }
