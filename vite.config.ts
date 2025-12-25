@@ -5,7 +5,11 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   define: {
-    // Memastikan process.env.API_KEY bisa diakses di client-side
+    // Vite will replace this string during build with the environment variable from Vercel
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY || '')
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false
   }
 });
