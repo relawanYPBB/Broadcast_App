@@ -14,8 +14,6 @@ import type { NarrativeType, GeneratedOutput, ChatMessage } from './types';
 import { DocumentUploadForm } from './components/DocumentUploadForm';
 import { InputModeSelector } from './components/InputModeSelector';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
-
 const responseSchema = {
   type: Type.OBJECT,
   properties: {
@@ -89,6 +87,8 @@ function App() {
     setIsLoading(true);
     setError(null);
 
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+
     const systemInstruction = `Anda adalah asisten AI yang bertugas membuat narasi untuk grup relawan Yayasan Pengembangan Biosains dan Bioteknologi (YPBB).
 Tugas Anda adalah memproses input dari pengguna, menganalisisnya, dan kemudian menghasilkan beberapa variasi narasi yang siap disebarkan.
 Anda HARUS SELALU mematuhi panduan komunikasi YPBB yang terlampir.
@@ -125,7 +125,7 @@ ${YPBB_GUIDE_CONTEXT}`;
       }
 
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3-flash-preview',
         contents: contents,
         config: {
           systemInstruction: systemInstruction,
@@ -134,7 +134,10 @@ ${YPBB_GUIDE_CONTEXT}`;
         },
       });
 
-      const jsonOutput: GeneratedOutput = JSON.parse(response.text);
+      const textOutput = response.text;
+      if (!textOutput) throw new Error("AI tidak memberikan respons.");
+
+      const jsonOutput: GeneratedOutput = JSON.parse(textOutput);
       setGeneratedOutput(jsonOutput);
     } catch (e) {
       console.error("Error during initial generation:", e);
@@ -158,7 +161,8 @@ ${YPBB_GUIDE_CONTEXT}`;
     setIsLoading(true);
     setError(null);
     
-    // Create a robust revision prompt that includes the current state
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+
     const revisionPrompt = `
       STATUS NARASI SAAT INI (JSON):
       ${JSON.stringify(generatedOutput)}
@@ -182,7 +186,6 @@ ${YPBB_GUIDE_CONTEXT}`;
       ${YPBB_GUIDE_CONTEXT}`;
 
     try {
-      // Build parts for the latest message
       const latestUserParts: any[] = [{ text: revisionPrompt }];
       if (file) {
         const base64File = await fileToBase64(file);
@@ -194,7 +197,6 @@ ${YPBB_GUIDE_CONTEXT}`;
         });
       }
 
-      // Construct the full context including previous chat history to improve memory
       const contents: Content[] = [
         ...chatHistory.map(msg => ({
           role: msg.role,
@@ -204,7 +206,7 @@ ${YPBB_GUIDE_CONTEXT}`;
       ];
 
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3-flash-preview',
         contents: contents,
         config: {
           systemInstruction: systemInstruction,
@@ -213,7 +215,10 @@ ${YPBB_GUIDE_CONTEXT}`;
         },
       });
       
-      const newJsonOutput: GeneratedOutput = JSON.parse(response.text);
+      const textOutput = response.text;
+      if (!textOutput) throw new Error("AI tidak memberikan respons.");
+
+      const newJsonOutput: GeneratedOutput = JSON.parse(textOutput);
       setGeneratedOutput(newJsonOutput);
 
       const modelMessage: ChatMessage = { role: 'model', parts: [{ text: newJsonOutput.analysis }] };
