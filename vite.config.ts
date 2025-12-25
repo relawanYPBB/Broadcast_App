@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   define: {
-    // Memastikan process.env.API_KEY dari Vercel bisa dibaca di frontend
-    'process.env.API_KEY': JSON.stringify(process.env.API_KEY)
+    // Memastikan process.env.API_KEY bisa diakses di client-side
+    'process.env.API_KEY': JSON.stringify(process.env.API_KEY || '')
   }
 });
