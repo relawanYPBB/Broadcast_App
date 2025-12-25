@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { GoogleGenAI, Type, Content } from '@google/genai';
 import { Header } from './components/Header';
@@ -87,7 +86,8 @@ function App() {
     setIsLoading(true);
     setError(null);
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+    const apiKey = (process.env as any).API_KEY || '';
+    const ai = new GoogleGenAI({ apiKey });
 
     const systemInstruction = `Anda adalah asisten AI yang bertugas membuat narasi untuk grup relawan Yayasan Pengembangan Biosains dan Bioteknologi (YPBB).
 Tugas Anda adalah memproses input dari pengguna, menganalisisnya, dan kemudian menghasilkan beberapa variasi narasi yang siap disebarkan.
@@ -161,7 +161,8 @@ ${YPBB_GUIDE_CONTEXT}`;
     setIsLoading(true);
     setError(null);
     
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+    const apiKey = (process.env as any).API_KEY || '';
+    const ai = new GoogleGenAI({ apiKey });
 
     const revisionPrompt = `
       STATUS NARASI SAAT INI (JSON):
